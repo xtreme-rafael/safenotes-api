@@ -1,7 +1,8 @@
 package main
 
 import (
-	"net/http"
+	"github.com/gorilla/mux"
+	"github.com/xtreme-rafael/safenotes-api/server"
 )
 
 func main() {
@@ -9,9 +10,8 @@ func main() {
 }
 
 func runServer() {
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		writer.Write([]byte("Hello World"))
-	})
+	router := mux.NewRouter()
+	server := server.NewSafeNotesServer(*router)
 
-	http.ListenAndServe(":5000", nil)
+	server.RunServer()
 }
