@@ -175,5 +175,83 @@ var _ = Describe("DbexecutorImpl", func() {
 				})
 			})
 		})
+
+		Describe("ExecWithTx()", func() {
+			var errorResult error
+			var worker func(*sql.Tx) error
+
+			BeforeEach(func() {
+			    errorResult = nil
+				worker = nil
+			})
+
+			JustBeforeEach(func() {
+			    errorResult = subject.ExecWithTx(worker)
+			})
+
+		    Context("when ExecWithTx() is called with a valid worker", func() {
+				query := "create table test;"
+
+		        BeforeEach(func() {
+		            worker = func(tx *sql.Tx) error {
+						_, err := tx.Exec(query)
+						return err
+					}
+		        })
+
+				Context("and the transaction creation succeeds", func() {
+				    BeforeEach(func() {
+				        dbmock.ExpectBegin()
+				    })
+
+					itShouldHaveExecutedAllTheExpectedDBOperations := func() {
+						It("should have executed all the DB commands that were expected", func() {
+						    err := dbmock.ExpectationsWereMet()
+							Expect(err).To(BeNil())
+						})
+					}
+
+					Context("when the worker succeeds", func() {
+					    BeforeEach(func() {
+					        dbmock.ExpectExec(query).WillReturnResult(sqlmock.NewResult(0, 0))
+							dbmock.ExpectCommit()
+					    })
+
+						itShouldHaveExecutedAllTheExpectedDBOperations()
+
+						It("should not have returned an error", func() {
+						    Expect(errorResult).To(BeNil())
+						})
+					})
+
+					Context("when the worker fails", func() {
+						kError := errors.New("some error")
+
+					    BeforeEach(func() {
+					        dbmock.ExpectExec(query).WillReturnError(kError)
+							dbmock.ExpectRollback()
+					    })
+
+						itShouldHaveExecutedAllTheExpectedDBOperations()
+
+						It("should have returned the error from the worker", func() {
+						    Expect(errorResult).To(Equal(kError))
+						})
+					})
+				})
+
+				Context("and the transaction creation fails", func() {
+					kError := errors.New("some error")
+
+					BeforeEach(func() {
+						dbmock.ExpectBegin().WillReturnError(kError)
+					})
+
+					It("should have returned the error from the transaction creation", func() {
+					    Expect(errorResult).To(Equal(kError))
+					})
+				})
+		    })
+		})
 	})
 })
