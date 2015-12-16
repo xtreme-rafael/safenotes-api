@@ -19,7 +19,7 @@ func NewDBExecutor(database *sql.DB) DBExecutor {
 }
 
 func (self *DBExecutorImpl) ExecWithDB(worker func(*sql.DB) error) error {
-	return errors.New("not implemented")
+	return worker(self.db)
 }
 
 func (self *DBExecutorImpl) ExecWithTx(worker func(*sql.Tx) error) error {

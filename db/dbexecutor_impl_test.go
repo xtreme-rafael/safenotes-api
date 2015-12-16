@@ -110,5 +110,70 @@ var _ = Describe("DbexecutorImpl", func() {
 				})
 			})
 		})
+
+		Describe("ExecWithDB()", func() {
+			var errorResult error
+			var worker func(*sql.DB) error
+
+			BeforeEach(func() {
+				errorResult = nil
+				worker = nil
+			})
+
+			JustBeforeEach(func() {
+				defer panicRecover()
+			    errorResult = subject.ExecWithDB(worker)
+			})
+
+			Context("when ExecWithDB() is called with a proper worker", func() {
+				query := "create table test;"
+				
+				BeforeEach(func() {
+					worker = func(db *sql.DB) error {
+						_, err := db.Exec(query)
+						return err
+					}
+				})
+
+				itShouldHaveExecutedTheWorkerWithTheDB := func() {
+					It("should have executed the worker with the DB in the executor", func() {
+						err := dbmock.ExpectationsWereMet()
+						Expect(err).To(BeNil())
+					})
+				}
+
+				Context("and the worker succeeds", func() {
+				    BeforeEach(func() {
+						dbmock.ExpectExec(query).WillReturnResult(sqlmock.NewResult(0, 0))
+				    })
+
+					itShouldHaveExecutedTheWorkerWithTheDB()
+				})
+				
+				Context("and the worker fails", func() {
+					kError := errors.New("some error")
+
+				    BeforeEach(func() {
+				        dbmock.ExpectExec(query).WillReturnError(kError)
+				    })
+
+					itShouldHaveExecutedTheWorkerWithTheDB()
+
+					It("should have returned the error from the worker", func() {
+					    Expect(errorResult).To(Equal(kError))
+					})
+				})
+			})
+
+			Context("when ExecWithDB() is called with a nil worker", func() {
+			    BeforeEach(func() {
+			        worker = nil
+			    })
+
+				It("should have panicked", func() {
+				    Expect(panicked).To(BeTrue())
+				})
+			})
+		})
 	})
 })
