@@ -6,11 +6,12 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/xtreme-rafael/go-sqlmock"
+	"database/sql"
+	"errors"
 )
 
 var _ = Describe("DbexecutorImpl", func() {
 	var subject DBExecutor
-
 	var panicked bool
 
 	panicRecover := func() {
@@ -18,6 +19,7 @@ var _ = Describe("DbexecutorImpl", func() {
 	}
 
 	BeforeEach(func() {
+		subject = nil
 	    panicked = false
 	})
 
@@ -55,6 +57,57 @@ var _ = Describe("DbexecutorImpl", func() {
 			It("should have returned an object of type DBExecutorImpl", func() {
 				_, typeOK := subject.(*DBExecutorImpl)
 			    Expect(typeOK).To(BeTrue())
+			})
+		})
+	})
+
+	Describe("Methods", func() {
+	    var db *sql.DB
+		var dbmock sqlmock.Sqlmock
+
+		BeforeEach(func() {
+			db, dbmock = nil, nil
+		    db, dbmock, _ = sqlmock.New()
+			subject = NewDBExecutor(db)
+		})
+
+		Describe("CloseDB()", func() {
+			var errorResult error
+
+			JustBeforeEach(func() {
+			    errorResult = subject.CloseDB()
+			})
+
+			Context("when closing the DB succeeds", func() {
+				BeforeEach(func() {
+					dbmock.ExpectClose()
+				})
+
+				It("should have closed the DB", func() {
+					err := dbmock.ExpectationsWereMet()
+					Expect(err).To(BeNil())
+				})
+
+				It("should not have returned an error", func() {
+				    Expect(errorResult).To(BeNil())
+				})
+			})
+
+			Context("when closing the DB fails", func() {
+				kError := errors.New("some error")
+
+				BeforeEach(func() {
+			        dbmock.ExpectClose().WillReturnError(kError)
+			    })
+
+				It("should have closed the DB", func() {
+				    err := dbmock.ExpectationsWereMet()
+					Expect(err).To(BeNil())
+				})
+
+				It("should have returned the same error as the DB.Close() call returned", func() {
+				    Expect(errorResult).To(Equal(kError))
+				})
 			})
 		})
 	})

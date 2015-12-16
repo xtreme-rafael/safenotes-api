@@ -7,4 +7,5 @@ import (
 type DBExecutor interface {
 	ExecWithDB(func(*sql.DB) error) error
 	ExecWithTx(func(*sql.Tx) error) error
+	CloseDB() error
 }
