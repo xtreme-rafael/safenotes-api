@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gopkg.in/DATA-DOG/go-sqlmock.v1"
+	"github.com/xtreme-rafael/go-sqlmock"
 )
 
 var _ = Describe("DbexecutorImpl", func() {
