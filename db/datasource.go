@@ -1,11 +1,12 @@
 package db
+
 import (
 	"database/sql"
-	"github.com/cloudfoundry-community/go-cfenv"
-	"fmt"
-	"github.com/xtreme-rafael/safenotes-api/utils"
-	_ "github.com/go-sql-driver/mysql"
 	"errors"
+	"fmt"
+	"github.com/cloudfoundry-community/go-cfenv"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/xtreme-rafael/safenotes-api/utils"
 )
 
 const (
@@ -14,7 +15,7 @@ const (
 )
 
 func GetCloudFoundryDatabase() (*sql.DB, error) {
-	dataSourceName := getCloudFoundryDataSource();
+	dataSourceName := getCloudFoundryDataSource()
 	if dataSourceName == "" {
 		err := errors.New("Unable to retrieve database credentials from CF")
 		utils.Log(PackageName, err.Error())
