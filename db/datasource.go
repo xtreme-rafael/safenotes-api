@@ -10,7 +10,9 @@ import (
 )
 
 const (
-	PackageName = "DB"
+	PackageName                 = "DB"
+	sqlDialect                  = "mysql"
+	cfServiceTagMysql           = "mysql"
 	mysqlDataSourceStringFormat = "%s:%s@tcp(%s:%s)/%s?parseTime=true"
 )
 
@@ -22,7 +24,7 @@ func GetCloudFoundryDatabase() (*sql.DB, error) {
 		return nil, err
 	}
 
-	db, err := sql.Open("mysql", dataSourceName)
+	db, err := sql.Open(sqlDialect, dataSourceName)
 	if err != nil {
 		err = errors.New("Unable to open connection with DB - " + err.Error())
 		utils.Log(PackageName, err.Error())
@@ -35,7 +37,7 @@ func GetCloudFoundryDatabase() (*sql.DB, error) {
 func getCloudFoundryDataSource() string {
 	env, _ := cfenv.Current()
 	if env != nil {
-		mysqlService, _ := env.Services.WithTag("mysql")
+		mysqlService, _ := env.Services.WithTag(cfServiceTagMysql)
 		credentials := mysqlService[0].Credentials
 		dataSourceName := fmt.Sprintf(mysqlDataSourceStringFormat,
 			credentials["username"],
