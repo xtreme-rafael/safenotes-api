@@ -10,14 +10,12 @@ import (
 )
 
 const (
-	PackageName                 = "DB"
-	sqlDialect                  = "mysql"
-	cfServiceTagMysql           = "mysql"
-	mysqlDataSourceStringFormat = "%s:%s@tcp(%s:%s)/%s?parseTime=true"
+	PackageName            = "DB"
+	dataSourceStringFormat = "%s:%s@tcp(%s:%s)/%s?parseTime=true"
 )
 
-func GetCloudFoundryDatabase() (*sql.DB, error) {
-	dataSourceName := getCloudFoundryDataSource()
+func GetCloudFoundryDatabase(cfServiceTag string, sqlDialect string) (*sql.DB, error) {
+	dataSourceName := getCloudFoundryDataSource(cfServiceTag)
 	if dataSourceName == "" {
 		err := errors.New("Unable to retrieve database credentials from CF")
 		utils.Log(PackageName, err.Error())
@@ -34,12 +32,12 @@ func GetCloudFoundryDatabase() (*sql.DB, error) {
 	return db, nil
 }
 
-func getCloudFoundryDataSource() string {
+func getCloudFoundryDataSource(cfServiceTag string) string {
 	env, _ := cfenv.Current()
 	if env != nil {
-		mysqlService, _ := env.Services.WithTag(cfServiceTagMysql)
-		credentials := mysqlService[0].Credentials
-		dataSourceName := fmt.Sprintf(mysqlDataSourceStringFormat,
+		service, _ := env.Services.WithTag(cfServiceTag)
+		credentials := service[0].Credentials
+		dataSourceName := fmt.Sprintf(dataSourceStringFormat,
 			credentials["username"],
 			credentials["password"],
 			credentials["hostname"],
